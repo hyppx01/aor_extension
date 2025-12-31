@@ -51,7 +51,6 @@
         ></textarea>
         <div class="textarea-footer">
           <span id="char-count" class="char-count">0 字符</span>
-          <span id="content-hint" class="hint">支持完整的 Markdown 语法</span>
         </div>
       </div>
 
@@ -96,9 +95,8 @@
             <input
               type="text"
               id="gh-repo-url"
-              placeholder="https://github.com/jclio-my/ai_output_retention"
+              placeholder="https://github.com/[username]/ai_output_retention"
             >
-            <span class="hint">例如: https://github.com/jclio-my/ai_output_retention</span>
           </div>
 
           <div class="form-group checkbox-group">
@@ -122,9 +120,12 @@
 
   <!-- Footer -->
   <footer class="extension-footer">
-    <a href="https://github.com/jclio-my/ai_output_retention" target="_blank">
+    <a id="blog-link" href="#" target="_blank" style="display: none;">
       查看博客项目
     </a>
+    <span id="blog-link-placeholder" style="color: var(--color-text-secondary);">
+      查看博客项目 (配置后可用)
+    </span>
   </footer>
 
   <script src="lib/encoding.js"></script>

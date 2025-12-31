@@ -40,6 +40,8 @@ function cacheElements() {
   elements.statusMessage = document.getElementById('status-message');
   elements.connectionStatus = document.getElementById('connection-status');
   elements.charCount = document.getElementById('char-count');
+  elements.blogLink = document.getElementById('blog-link');
+  elements.blogLinkPlaceholder = document.getElementById('blog-link-placeholder');
 
   // Config fields
   elements.ghToken = document.getElementById('gh-token');
@@ -108,12 +110,34 @@ function extractTitleFromMarkdown(content) {
 /**
  * Update title summary text
  * @param {string|null} title - Current title
+ * @param {boolean} hasContent - Whether there is content being processed
  */
-function updateTitleSummary(title) {
+function updateTitleSummary(title, hasContent = false) {
   if (title) {
     elements.titleSummaryText.textContent = `文章标题: ${title}`;
+  } else if (hasContent) {
+    // Has content but no title found
+    elements.titleSummaryText.textContent = '请手动设置标题';
   } else {
-    elements.titleSummaryText.textContent = '文章标题 (需要手动设置)';
+    // No content yet, show default
+    elements.titleSummaryText.textContent = '文章标题';
+  }
+}
+
+/**
+ * Update blog link visibility and URL based on config
+ */
+function updateBlogLink() {
+  if (state.config?.ghOwner && state.config?.ghRepo) {
+    // Has valid config, show the link
+    const repoUrl = `https://github.com/${state.config.ghOwner}/${state.config.ghRepo}`;
+    elements.blogLink.href = repoUrl;
+    elements.blogLink.style.display = '';
+    elements.blogLinkPlaceholder.style.display = 'none';
+  } else {
+    // No valid config, show placeholder
+    elements.blogLink.style.display = 'none';
+    elements.blogLinkPlaceholder.style.display = '';
   }
 }
 
@@ -144,6 +168,9 @@ async function loadConfig() {
     if (state.config.ghToken) elements.ghToken.value = state.config.ghToken;
     if (state.config.ghRepoUrl) elements.ghRepoUrl.value = state.config.ghRepoUrl;
     elements.ghDatePrefix.checked = state.config.ghDatePrefix;
+
+    // Update blog link based on config
+    updateBlogLink();
   } catch (error) {
     console.error('Failed to load config:', error);
     showStatus('配置加载失败', 'error');
@@ -178,25 +205,36 @@ function setupEventListeners() {
  */
 function handleContentInput() {
   const content = elements.content.value;
-  const extractedTitle = extractTitleFromMarkdown(content);
 
+  // Only process if there's actual content (not just whitespace)
+  if (!content || !content.trim()) {
+    // Content is empty, reset to default state
+    if (!elements.title.value) {
+      updateTitleSummary(null, false);
+      elements.titleDetails.open = false;
+    }
+    return;
+  }
+
+  const extractedTitle = extractTitleFromMarkdown(content);
   state.extractedTitle = extractedTitle;
 
   // Only update the title input if it's empty or matches the previous extracted title
   // This allows manual override
   if (extractedTitle) {
-    // If the input is empty or starts with "(自动检测)", update it
+    // Found a title, update and collapse
     if (!elements.title.value || elements.title.value === state.extractedTitle) {
       elements.title.value = extractedTitle;
     }
-    updateTitleSummary(extractedTitle);
+    updateTitleSummary(extractedTitle, true);
     // Keep the details collapsed since we have a title
     if (elements.titleDetails.open && document.activeElement !== elements.title) {
       elements.titleDetails.open = false;
     }
   } else {
-    updateTitleSummary(null);
-    // Auto-expand if no title found
+    // No title found in content, prompt user to set manually
+    updateTitleSummary(null, true);
+    // Auto-expand if no title found and no manual title set
     if (!elements.title.value) {
       elements.titleDetails.open = true;
     }
@@ -208,7 +246,8 @@ function handleContentInput() {
  */
 function handleTitleInput() {
   const manualTitle = elements.title.value.trim();
-  updateTitleSummary(manualTitle || null);
+  const hasContent = elements.content.value.trim().length > 0;
+  updateTitleSummary(manualTitle || null, hasContent);
 
   // Clear status if it contains title-related message
   if (elements.statusMessage.textContent.includes('标题')) {
@@ -255,6 +294,7 @@ async function handleSaveConfig() {
     state.config = config;
     showStatus('配置已保存', 'success');
     updateConnectionStatus();
+    updateBlogLink();
   } catch (error) {
     console.error('Failed to save config:', error);
     showStatus('配置保存失败', 'error');
