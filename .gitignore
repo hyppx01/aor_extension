@@ -1,0 +1,30 @@
+# 编辑器和IDE配置
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 构建输出
+build/
+dist/
+*.crx
+*.zip
+
+# 临时文件
+*.log
+*.tmp
+temp/
+
+# 依赖目录
+node_modules/
+
+# 测试覆盖
+coverage/
+
+# 环境配置文件（根据需要调整）
+.env
+.env.local
+.env.*.local

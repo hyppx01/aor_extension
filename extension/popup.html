@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Output Clipper</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="extension-header">
+    <h1>AI Output Clipper</h1>
+    <div id="connection-status" class="status-indicator" aria-live="polite" title="连接状态未知"></div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <section class="input-section">
+      <!-- Title Configuration (Collapsible) -->
+      <details class="title-details" id="title-details">
+        <summary class="config-summary">
+          <span id="title-summary-text">文章标题 (自动检测)</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </summary>
+
+        <div class="config-content">
+          <div class="form-group">
+            <label for="title">文章标题</label>
+            <input
+              type="text"
+              id="title"
+              placeholder="例如: 如何使用 Next.js"
+              maxlength="200"
+              aria-describedby="title-hint"
+            >
+            <span id="title-hint" class="hint">将作为文件名和文章标题</span>
+          </div>
+        </div>
+      </details>
+
+      <div class="form-group">
+        <label for="content">Markdown 内容</label>
+        <textarea
+          id="content"
+          placeholder="# 从 ChatGPT 或其他 AI 工具粘贴内容..."
+          rows="12"
+          aria-describedby="content-hint"
+          required
+        ></textarea>
+        <div class="textarea-footer">
+          <span id="char-count" class="char-count">0 字符</span>
+          <span id="content-hint" class="hint">支持完整的 Markdown 语法</span>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="preview-btn" class="btn-secondary" type="button">
+          预览文件名
+        </button>
+        <button id="publish-btn" class="btn-primary" type="button">
+          发布到博客
+        </button>
+      </div>
+
+      <div id="status-message" class="status-message" role="status" aria-live="polite"></div>
+    </section>
+
+    <!-- Configuration Section -->
+    <section class="config-section">
+      <details class="config-details">
+        <summary class="config-summary">
+          <span>GitHub 配置</span>
+          <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </summary>
+
+        <div class="config-content">
+          <div class="form-group">
+            <label for="gh-token">GitHub Personal Access Token</label>
+            <input
+              type="password"
+              id="gh-token"
+              placeholder="ghp_xxxxxxxxxxxx"
+              autocomplete="off"
+            >
+            <a href="https://github.com/settings/tokens" target="_blank" class="help-link">
+              如何获取 Token?
+            </a>
+          </div>
+
+          <div class="form-group">
+            <label for="gh-repo-url">GitHub 仓库地址</label>
+            <input
+              type="text"
+              id="gh-repo-url"
+              placeholder="https://github.com/jclio-my/ai_output_retention"
+            >
+            <span class="hint">例如: https://github.com/jclio-my/ai_output_retention</span>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="gh-date-prefix" checked>
+              <span>文件名添加日期前缀</span>
+            </label>
+          </div>
+
+          <button id="save-config-btn" class="btn-secondary" type="button">
+            保存配置
+          </button>
+
+          <button id="test-connection-btn" class="btn-tertiary" type="button">
+            测试连接
+          </button>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="extension-footer">
+    <a href="https://github.com/jclio-my/ai_output_retention" target="_blank">
+      查看博客项目
+    </a>
+  </footer>
+
+  <script src="lib/encoding.js"></script>
+  <script src="lib/slug.js"></script>
+  <script src="lib/github-api.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
