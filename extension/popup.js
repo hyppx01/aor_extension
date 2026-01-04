@@ -35,7 +35,7 @@ function cacheElements() {
   elements.titleDetails = document.getElementById('title-details');
   elements.titleSummaryText = document.getElementById('title-summary-text');
   elements.publishBtn = document.getElementById('publish-btn');
-  elements.previewBtn = document.getElementById('preview-btn');
+  elements.pasteBtn = document.getElementById('paste-btn');
   elements.saveConfigBtn = document.getElementById('save-config-btn');
   elements.testConnectionBtn = document.getElementById('test-connection-btn');
   elements.statusMessage = document.getElementById('status-message');
@@ -181,7 +181,7 @@ async function loadConfig() {
 function setupEventListeners() {
   elements.saveConfigBtn.addEventListener('click', handleSaveConfig);
   elements.publishBtn.addEventListener('click', handlePublish);
-  elements.previewBtn.addEventListener('click', handlePreview);
+  elements.pasteBtn.addEventListener('click', handlePaste);
   elements.testConnectionBtn.addEventListener('click', handleTestConnection);
 
   // Auto-extract title from content
@@ -356,28 +356,23 @@ async function handleTestConnection() {
 }
 
 /**
- * Handle preview filename
+ * Handle paste from clipboard
  */
-async function handlePreview() {
-  // Use extracted title or manual input
-  const title = elements.title.value.trim() || state.extractedTitle;
-
-  if (!title) {
-    showStatus('请先输入内容或手动设置标题', 'warning');
-    // Expand title section to prompt user
-    elements.titleDetails.open = true;
-    elements.title.focus();
-    return;
+async function handlePaste() {
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text) {
+      elements.content.value = text;
+      updateCharCount();
+      handleContentInput(); // Trigger title extraction
+      showStatus('已粘贴剪切板内容', 'success');
+    } else {
+      showStatus('剪切板为空', 'warning');
+    }
+  } catch (error) {
+    console.error('Failed to read clipboard:', error);
+    showStatus('无法读取剪切板，请手动粘贴', 'error');
   }
-
-  const filename = SlugUtils.generateFilename(title, {
-    datePrefix: true // Always use date prefix
-  });
-
-  // Path is always 'posts'
-  const fullPath = `posts/${filename}`;
-
-  showStatus(`预览: ${fullPath}`, 'info');
 }
 
 /**
