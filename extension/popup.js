@@ -7,7 +7,8 @@
 const state = {
   config: null,
   isPublishing: false,
-  extractedTitle: null // Stores title extracted from content
+  extractedTitle: null, // Stores title extracted from content
+  isTitleManuallyEdited: false // Tracks if user manually edited the title
 };
 
 // DOM element references (cached for performance)
@@ -46,7 +47,6 @@ function cacheElements() {
   // Config fields
   elements.ghToken = document.getElementById('gh-token');
   elements.ghRepoUrl = document.getElementById('gh-repo-url');
-  elements.ghDatePrefix = document.getElementById('gh-date-prefix');
 }
 
 /**
@@ -114,7 +114,7 @@ function extractTitleFromMarkdown(content) {
  */
 function updateTitleSummary(title, hasContent = false) {
   if (title) {
-    elements.titleSummaryText.textContent = `文章标题: ${title}`;
+    elements.titleSummaryText.textContent = title;
   } else if (hasContent) {
     // Has content but no title found
     elements.titleSummaryText.textContent = '请手动设置标题';
@@ -148,15 +148,14 @@ async function loadConfig() {
   try {
     const stored = await chrome.storage.sync.get([
       'ghToken',
-      'ghRepoUrl',
-      'ghDatePrefix'
+      'ghRepoUrl'
     ]);
 
     state.config = {
       ghToken: stored.ghToken || '',
       ghRepoUrl: stored.ghRepoUrl || '',
       ghPath: 'posts', // Fixed path
-      ghDatePrefix: stored.ghDatePrefix !== false // default true
+      ghDatePrefix: true // Always use date prefix
     };
 
     // Parse owner and repo from URL
@@ -167,7 +166,6 @@ async function loadConfig() {
     // Populate form fields
     if (state.config.ghToken) elements.ghToken.value = state.config.ghToken;
     if (state.config.ghRepoUrl) elements.ghRepoUrl.value = state.config.ghRepoUrl;
-    elements.ghDatePrefix.checked = state.config.ghDatePrefix;
 
     // Update blog link based on config
     updateBlogLink();
@@ -209,7 +207,9 @@ function handleContentInput() {
   // Only process if there's actual content (not just whitespace)
   if (!content || !content.trim()) {
     // Content is empty, reset to default state
-    if (!elements.title.value) {
+    // Clear title if it was auto-extracted
+    if (!elements.title.value || elements.title.value === state.extractedTitle) {
+      elements.title.value = '';
       updateTitleSummary(null, false);
       elements.titleDetails.open = false;
     }
@@ -223,7 +223,7 @@ function handleContentInput() {
   // This allows manual override
   if (extractedTitle) {
     // Found a title, update and collapse
-    if (!elements.title.value || elements.title.value === state.extractedTitle) {
+    if (!state.isTitleManuallyEdited) {
       elements.title.value = extractedTitle;
     }
     updateTitleSummary(extractedTitle, true);
@@ -247,6 +247,14 @@ function handleContentInput() {
 function handleTitleInput() {
   const manualTitle = elements.title.value.trim();
   const hasContent = elements.content.value.trim().length > 0;
+  
+  // Mark as manually edited if user changes the title
+  if (manualTitle && manualTitle !== state.extractedTitle) {
+    state.isTitleManuallyEdited = true;
+  } else if (!manualTitle) {
+    state.isTitleManuallyEdited = false;
+  }
+  
   updateTitleSummary(manualTitle || null, hasContent);
 
   // Clear status if it contains title-related message
@@ -266,7 +274,7 @@ async function handleSaveConfig() {
     ghToken: elements.ghToken.value.trim(),
     ghRepoUrl: ghRepoUrl,
     ghPath: 'posts', // Fixed path
-    ghDatePrefix: elements.ghDatePrefix.checked
+    ghDatePrefix: true // Always use date prefix
   };
 
   // Validation
@@ -363,7 +371,7 @@ async function handlePreview() {
   }
 
   const filename = SlugUtils.generateFilename(title, {
-    datePrefix: elements.ghDatePrefix.checked
+    datePrefix: true // Always use date prefix
   });
 
   // Path is always 'posts'
@@ -414,7 +422,7 @@ async function handlePublish() {
 
     const result = await client.createPost(title, content, {
       path: state.config.ghPath,
-      datePrefix: state.config.ghDatePrefix
+      datePrefix: true // Always use date prefix
     });
 
     // Success!
@@ -424,6 +432,7 @@ async function handlePublish() {
     // Clear form
     elements.title.value = '';
     state.extractedTitle = null;
+    state.isTitleManuallyEdited = false;
     updateTitleSummary(null);
     elements.content.value = '';
     updateCharCount();
